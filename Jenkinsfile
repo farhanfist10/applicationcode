@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "backend-app" // Just image name, no URL here
+        IMAGE_NAME = "backend-app"
         IMAGE_TAG = "v${BUILD_NUMBER}"
         FULL_IMAGE = "54.81.112.24:9000/${IMAGE_NAME}:${IMAGE_TAG}"
 
@@ -21,14 +21,14 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}") // Build only, locally
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
 
         stage('Push Docker Image to Nexus') {
             environment {
-                DOCKER_CREDS = credentials('nexus-docker-credentials') // ID from Jenkins credentials
+                DOCKER_CREDS = credentials('nexus-docker-credentials')
             }
             steps {
                 script {
@@ -58,6 +58,28 @@ pipeline {
                 git commit -m "Update image to 54.81.112.24:9000/${IMAGE_NAME}:${IMAGE_TAG}"
                 git push https://$TOKEN@github.com/farhanfist10/manifests.git update-image-$BUILD_NUMBER
                 """
+            }
+        }
+
+        // 🚀 New Stage Added Below
+        stage('Pull and Run the Docker Image for Test') {
+            environment {
+                DOCKER_CREDS = credentials('nexus-docker-credentials')
+            }
+            steps {
+                script {
+                    docker.withRegistry('http://54.81.112.24:9000', 'nexus-docker-credentials') {
+                        sh """
+                        docker pull 54.81.112.24:9000/${IMAGE_NAME}:${IMAGE_TAG}
+                        
+                        docker run -d --name test-container-${BUILD_NUMBER} -p 8084:8084 54.81.112.24:9000/${IMAGE_NAME}:${IMAGE_TAG}
+                        
+                        sleep 10
+                        
+                        docker logs test-container-${BUILD_NUMBER}
+                        """
+                    }
+                }
             }
         }
     }
