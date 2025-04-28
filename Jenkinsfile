@@ -52,7 +52,7 @@ pipeline {
                 git config user.email "jenkins@ci.local"
 
                 git checkout -b update-image-$BUILD_NUMBER
-                sed -i "s|image: .*|image: 13.58.246.191:5000/${IMAGE_NAME}:${IMAGE_TAG}|" deployment.yaml
+                sed -i "s|image: .*|image: 54.81.112.24:9000/${IMAGE_NAME}:${IMAGE_TAG}|" deployment.yaml
 
                 git add deployment.yaml
                 git commit -m "Update image to 54.81.112.24:9000/${IMAGE_NAME}:${IMAGE_TAG}"
